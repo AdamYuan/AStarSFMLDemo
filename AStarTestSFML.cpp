@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_set>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <rlutil.h>
@@ -15,8 +16,6 @@ sf::RenderWindow Win;
 sf::RenderTexture RenderTex;
 
 std::vector<Coordinate> PathVector;
-std::unordered_set<Coordinate> PathMap;
-std::unordered_set<Coordinate> SearchMap;
 
 AStar AStarMap;
 Coordinate Start(0, 0), Goal(Width-1, Height-1);
@@ -168,7 +167,6 @@ void Initialization()
 {
 	Win.create(sf::VideoMode(Width * CellSize, Height * CellSize), 
 			"AStar Algorithm Demo", sf::Style::Titlebar | sf::Style::Close);
-	//Win.setVerticalSyncEnabled(true);
 	RenderTex.create(Width * CellSize, Height * CellSize, false);
 	AStarMap.SetSize(Width, Height);
 
@@ -180,12 +178,9 @@ void Initialization()
 
 void UpdateMaps()
 {
-	PathVector.clear(), PathMap.clear(), SearchMap.clear();
+	PathVector.clear();
 
 	AStarMap.DoAStart(Start, Goal, PathVector);
-
-	PathMap = decltype(PathMap)(PathVector.begin(), PathVector.end());
-	SearchMap = AStarMap.GetSearchSet();
 
 	//redraw the RenderTexture
 	RenderTex.clear(BgColor);
@@ -199,9 +194,9 @@ void UpdateMaps()
 				cellColor = StartColor;
 			else if(i == Goal)
 				cellColor = GoalColor;
-			else if(PathMap.count(i))
+			else if(AStarMap.IsPath(i))
 				cellColor = PathColor;
-			else if(SearchMap.count(i))
+			else if(AStarMap.IsSearched(i))
 				cellColor = SearchColor;
 			else if(AStarMap.IsWall(i))
 				cellColor = WallColor;
@@ -231,7 +226,7 @@ void UpdateMaps()
 	RenderTex.display();
 
 	rlutil::cls();
-	std::cout << "searched: \t" << AStarMap.GetSearchSet().size() << " / " << Width * Height << std::endl
+	std::cout << "searched: \t" << AStarMap.GetSearcheNum() << " / " << Width * Height << std::endl
 		<< "distance: \t" << (PathVector.empty() ? 
 				std::numeric_limits<double>::infinity() : PathVector.back().eval) << std::endl
 		<< "walk steps: \t" << PathVector.size() << std::endl

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 #include <unordered_set>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -46,7 +47,7 @@ int main()
 			if(event.type == sf::Event::MouseButtonPressed)
 			{
 				Win.setFramerateLimit(0);
-				mouseDown = true, mouseButton = event.mouseButton.button;
+	 			mouseDown = true, mouseButton = event.mouseButton.button;
 
 				moveStart = false, moveGoal = false;
 				if(mousePos == Start)
@@ -132,6 +133,7 @@ std::list<Coordinate> ManhattanAStarNeighbours(const Coordinate &now, const ASta
 	}
 	return return_v;
 }
+const double DiagonalDist = 1.4142;
 double DiagonalAStarHeuristic(const Coordinate &now, const Coordinate &goal)
 {
 	int dx = abs(now.x - goal.x);
@@ -139,22 +141,30 @@ double DiagonalAStarHeuristic(const Coordinate &now, const Coordinate &goal)
 	//return dx + dy;
 
 	if(dx > dy)
-		return 1.4142 * dy + (dx - dy);
+		return DiagonalDist * dy + (dx - dy);
 	else
-		return 1.4142 * dx + (dy - dx);
+		return DiagonalDist * dx + (dy - dx);
 }
 std::list<Coordinate> DiagonalAStarNeighbours(const Coordinate &now, const AStar &astar)
 {
-	static std::list<Coordinate> dirs = {{0, 1, 1}, {0, -1, 1}, {1, 0, 1}, {-1, 0, 1}, 
-		{1, 1, 1.4142}, {1, -1, 1.4142}, {-1, 1, 1.4142}, {-1, -1, 1.4142}};
+	static std::list<Coordinate> dirs = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+	static std::list<Coordinate> dia_dirs = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 	std::list<Coordinate> return_v;
 	for(const Coordinate &d : dirs)
+	{
+		Coordinate nei(d.x + now.x, d.y + now.y, 1);
+		if(astar.IsWall(nei))
+			continue;
+
+		return_v.push_back(nei);
+	}
+	for(const Coordinate &d : dia_dirs)
 	{
 		Coordinate dirx(d.x + now.x, now.y), diry(now.x, d.y + now.y);
 		if(astar.IsWall(dirx) && astar.IsWall(diry))
 			continue;
 
-		Coordinate nei(d.x + now.x, d.y + now.y, d.eval);
+		Coordinate nei(d.x + now.x, d.y + now.y, DiagonalDist);
 		if(astar.IsWall(nei))
 			continue;
 
@@ -208,20 +218,20 @@ void UpdateMaps()
 			RenderTex.draw(cell);
 		}
 	/*sf::VertexArray pathLine(sf::LinesStrip, PathVector.size() + 1);
-	
-	pathLine[0].position = sf::Vector2f(
-			Start.x * CellSize + CellSize/2, 
-			Start.y * CellSize + CellSize/2);
-	pathLine[0].color = PathLineColor;
-	for(size_t i=0; i<PathVector.size(); ++i)
-	{
-		pathLine[i+1].position = sf::Vector2f(
-				PathVector[i].x * CellSize + CellSize/2, 
-				PathVector[i].y * CellSize + CellSize/2);
-		pathLine[i+1].color = PathLineColor;
-	}
 
-	RenderTex.draw(pathLine);*/
+	  pathLine[0].position = sf::Vector2f(
+	  Start.x * CellSize + CellSize/2, 
+	  Start.y * CellSize + CellSize/2);
+	  pathLine[0].color = PathLineColor;
+	  for(size_t i=0; i<PathVector.size(); ++i)
+	  {
+	  pathLine[i+1].position = sf::Vector2f(
+	  PathVector[i].x * CellSize + CellSize/2, 
+	  PathVector[i].y * CellSize + CellSize/2);
+	  pathLine[i+1].color = PathLineColor;
+	  }
+
+	  RenderTex.draw(pathLine);*/
 
 	RenderTex.display();
 

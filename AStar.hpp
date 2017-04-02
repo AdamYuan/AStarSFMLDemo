@@ -137,7 +137,7 @@ class AStar
 		{
 			Time = clock();
 
-			std::priority_queue<Coordinate, std::deque<Coordinate>, decltype(&CompareInPriorityQueue)> 
+			std::priority_queue<Coordinate, std::vector<Coordinate>, decltype(&CompareInPriorityQueue)> 
 				openSet(&CompareInPriorityQueue);
 			bool closeSet [Width][Height];
 
@@ -171,7 +171,7 @@ class AStar
 
 				if(now == goal)
 				{
-					Coordinate p = now;
+					Coordinate &p = now;
 					while(p != start)
 					{
 						V(PathMap, p) = true;

@@ -12,6 +12,7 @@ sf::Color BgColor(0, 0, 0), //PathLineColor(255, 255, 0),
 	PathColor(0, 170, 0), SearchColor(10, 30, 10),
 	StartColor(200, 0, 0), GoalColor(50, 50, 255),
 	WallColor(200, 200, 200);
+float PathLineThickness=3.0f;
 
 sf::RenderWindow Win;
 sf::RenderTexture RenderTex;
@@ -47,7 +48,7 @@ int main()
 			if(event.type == sf::Event::MouseButtonPressed)
 			{
 				Win.setFramerateLimit(0);
-	 			mouseDown = true, mouseButton = event.mouseButton.button;
+				mouseDown = true, mouseButton = event.mouseButton.button;
 
 				moveStart = false, moveGoal = false;
 				if(mousePos == Start)
@@ -161,7 +162,7 @@ std::list<Coordinate> DiagonalAStarNeighbours(const Coordinate &now, const AStar
 	for(const Coordinate &d : dia_dirs)
 	{
 		Coordinate dirx(d.x + now.x, now.y), diry(now.x, d.y + now.y);
-		if(astar.IsWall(dirx) && astar.IsWall(diry))
+		if(astar.IsWall(dirx) || astar.IsWall(diry))
 			continue;
 
 		Coordinate nei(d.x + now.x, d.y + now.y, DiagonalDist);
@@ -204,8 +205,8 @@ void UpdateMaps()
 				cellColor = StartColor;
 			else if(i == Goal)
 				cellColor = GoalColor;
-			else if(AStarMap.IsPath(i))
-				cellColor = PathColor;
+			//else if(AStarMap.IsPath(i))
+			//	cellColor = PathColor;
 			else if(AStarMap.IsSearched(i))
 				cellColor = SearchColor;
 			else if(AStarMap.IsWall(i))
@@ -217,21 +218,22 @@ void UpdateMaps()
 
 			RenderTex.draw(cell);
 		}
-	/*sf::VertexArray pathLine(sf::LinesStrip, PathVector.size() + 1);
 
-	  pathLine[0].position = sf::Vector2f(
-	  Start.x * CellSize + CellSize/2, 
-	  Start.y * CellSize + CellSize/2);
-	  pathLine[0].color = PathLineColor;
-	  for(size_t i=0; i<PathVector.size(); ++i)
-	  {
-	  pathLine[i+1].position = sf::Vector2f(
-	  PathVector[i].x * CellSize + CellSize/2, 
-	  PathVector[i].y * CellSize + CellSize/2);
-	  pathLine[i+1].color = PathLineColor;
-	  }
-
-	  RenderTex.draw(pathLine);*/
+	sf::RectangleShape lineRec(sf::Vector2f(CellSize, PathLineThickness));
+	lineRec.setFillColor(PathColor);
+	for(size_t i=0; i<PathVector.size(); ++i)
+	{
+		const Coordinate &now = PathVector[i], 
+			  &last = i==0 ? Start : PathVector[i-1];
+		lineRec.setPosition((now.x + last.x + 1)*CellSize / 2.0f,
+				(now.y + last.y + 1)*CellSize / 2.0f);
+		lineRec.setOrigin(CellSize/2.0f, PathLineThickness/2.0f);
+		lineRec.setScale(sqrtf(powf(now.x-last.x, 2) + powf(now.y-last.y, 2))
+				+ (PathLineThickness/20.0f), 1.0f);
+		lineRec.setRotation(atan((now.y - last.y) / 
+					(float)(now.x - last.x)) / 3.1415926 * 180);
+		RenderTex.draw(lineRec);
+	}
 
 	RenderTex.display();
 
@@ -245,7 +247,5 @@ void UpdateMaps()
 
 void RenderMap()
 {
-	const sf::Texture& texture = RenderTex.getTexture();
-
-	Win.draw(sf::Sprite(texture));
+	Win.draw(sf::Sprite(RenderTex.getTexture()));
 }
